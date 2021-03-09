@@ -1,13 +1,13 @@
 import math
 import random
-import visualize_tsp
+import visualize_mla
 import matplotlib.pyplot as plt
 
 
 class SimAnneal(object):
-    def __init__(self, coords, T=-1, alpha=-1, stopping_T=-1, stopping_iter=-1):
-        self.coords = coords
-        self.N = len(coords)
+    def __init__(self, edges, T=-1, alpha=-1, stopping_T=-1, stopping_iter=-1):
+        self.edges = edges
+        self.N = len(edges)
         self.T = math.sqrt(self.N) if T == -1 else T
         self.T_save = self.T  # save inital T to reset if batch annealing is used
         self.alpha = 0.995 if alpha == -1 else alpha
@@ -44,19 +44,15 @@ class SimAnneal(object):
         return solution, cur_fit
 
     def dist(self, node_0, node_1):
-        """
-        Euclidean distance between two nodes.
-        """
-        coord_0, coord_1 = self.coords[node_0], self.coords[node_1]
-        return math.sqrt((coord_0[0] - coord_1[0]) ** 2 + (coord_0[1] - coord_1[1]) ** 2)
+        #print(self.edges[max(node_0,node_1)][min(node_0,node_1)])
+        MAX_DISTANCE = 100 #TODO: Fix magic number
+        return MAX_DISTANCE - self.edges[max(node_0,node_1)][min(node_0,node_1)]
 
     def fitness(self, solution):
-        """
-        Total distance of the current solution path.
-        """
         cur_fit = 0
-        for i in range(self.N):
-            cur_fit += self.dist(solution[i % self.N], solution[(i + 1) % self.N])
+        for i in range(self.N-1):
+            for j in range(i+1,self.N):
+                cur_fit += self.edges[max(solution[i],solution[j])][min(solution[i],solution[j])] * (j-i)
         return cur_fit
 
     def p_accept(self, candidate_fitness):
@@ -101,6 +97,7 @@ class SimAnneal(object):
 
         print("Best fitness obtained: ", self.best_fitness)
         improvement = 100 * (self.fitness_list[0] - self.best_fitness) / (self.fitness_list[0])
+        print(self.best_solution)
         print(f"Improvement over greedy heuristic: {improvement : .2f}%")
 
     def batch_anneal(self, times=10):
@@ -118,7 +115,7 @@ class SimAnneal(object):
         """
         Visualize the TSP route with matplotlib.
         """
-        visualize_tsp.plotTSP([self.best_solution], self.coords)
+        visualize_mla.plotTSP([self.best_solution], self.edges)
 
     def plot_learning(self):
         """
